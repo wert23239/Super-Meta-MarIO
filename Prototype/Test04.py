@@ -102,7 +102,6 @@ def screen_record():
             break         
         #ReleaseKey(determine_key(time_step)) 
         if Gather and len(training_data) % 500==0:
-
             print(len(training_data))
             np.save(file_name,training_data)  
             np.save(file_name2,training_data2)   
