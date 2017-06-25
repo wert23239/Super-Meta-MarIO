@@ -1,4 +1,4 @@
-# Super-Meta-MarI/O
+# Super Meta MarIO
 ## Using genetic algorithms and reinforcement learning  combined to beat mario levels.
 
 
