@@ -1,6 +1,9 @@
 # Super Meta MarIO
 ## Using genetic algorithms and reinforcement learning  combined to beat mario levels.
 
+![Background](Background.png)
+
+[MarIO "Genetic Algorithm" (Lua)]()
 
 Tutuorials Used:
 
