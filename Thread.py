@@ -11,46 +11,22 @@ import cv2
 import time
 import math
 import random
-# import pyautogui
-#from directkeys import *
 from lib.getkeys import key_check
 from lib.reinforcement import agent,discount_rewards
 from lib.create_table import SQLCalls
-# import os
-# from alexnet import alexnet
 import sqlite3
 
 SQL=SQLCalls()
-WIDTH=28
-HEIGHT=28
-LR= 1e-3
-EPOCH=8
-MODEL_NAME= 'MarioAI-{}-{}-{}-epochs.model'.format(LR,'alexnetv2',EPOCH)
+
 def process_img(original_image):
     processed_img=cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
     processed_img= cv2.resize(processed_img,(28,28))
-    #rocess_img=cv2.Canny(processed_img, threshold1=200, threshold2=300)
     return processed_img
-
-
-
-def gain_history():
-    sql = '''Select image,action,score
-    from rewards where done=1 and score is not NULL'''
-    cur.execute(sql)
-    x=cur.fetchall()
-    return np.array(x)
-
-
-
-
-
-
 
 
 #Pre Tenserflow Session Setup
 tf.reset_default_graph()
-myAgent = agent(lr=1e-2,s_size=28*28,a_size=4,h_size=8)
+myAgent = agent(lr=1e-2,s_size=28*28,a_size=4,h_size=64)
 init = tf.global_variables_initializer()
 update_frequency = 5
 
@@ -71,9 +47,11 @@ def do_action(SQL,frame_count):
     a = np.random.choice(a_dist[0],p=a_dist[0])
     a = np.argmax(a_dist == a)
     rand_num=random.randint(0,10)
-    if rand_num>1:
+    if rand_num>=0:
         a=5
-    SQL.update_table(new_screen,int(a+1))   
+    print("update "+ str(frame_count))
+    SQL.update_table(new_screen,int(a+1)) 
+    print("update completed")
     frame_count+=1
     return frame_count
 
