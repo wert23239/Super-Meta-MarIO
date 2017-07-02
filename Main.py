@@ -13,11 +13,12 @@ import math
 import random
 from lib.getkeys import key_check
 from lib.reinforcement import agent,discount_rewards
-from lib.create_table import SQLCalls
+from lib.SQL import SQLCalls
 import sqlite3
 
 SQL=SQLCalls()
-
+SQL.GatherGenomes()
+exit()
 def process_img(original_image):
     processed_img=cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
     processed_img= cv2.resize(processed_img,(28,28))
