@@ -3,7 +3,6 @@
 
 ![Background](Background.png)
 
-[MarIO "Genetic Algorithm" (Lua)]()
 
 ### Tutuorials Used:
 
