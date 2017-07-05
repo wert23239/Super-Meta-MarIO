@@ -15,7 +15,7 @@ from lib.getkeys import key_check
 from lib.reinforcement import agent,discount_rewards
 from lib.SQL import SQLCalls
 import sqlite3
-
+POPULATION=25
 SQL=SQLCalls()
 
 
@@ -24,18 +24,21 @@ def process_img(original_image):
     processed_img= cv2.resize(processed_img,(28,28))
     return processed_img
 
+
 def do_action(SQL,frame_count):
     print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
     new_screen=np.array(np.reshape(process_img(print_screen),[28,28,1]))
+    
     #Gain Action from Tenserflow
     a_dist = sess.run(myAgent.final_output,feed_dict={myAgent.genomes:Genomes,myAgent.state_in:[new_screen]\
                                                              ,myAgent.used_genomes:UsedGenomes,myAgent.condition:0\
                                                                  ,myAgent.action_holder:[10]})
     a = np.random.choice(a_dist,p=a_dist)
     a = np.argmax([a_dist] == a)
-
+    UsedGenomes[a]=-np.inf
     print("update "+ str(frame_count))
-    SQL.update_table(new_screen,int(a+1)) 
+    species,genome=SQL.convert_to_species_genome(a+1)
+    SQL.update_table(new_screen,int(a),species,genome)
     print("update completed")
     frame_count+=1
     return frame_count
@@ -49,7 +52,7 @@ update_frequency = 5
 
 
 frame_count=0
-ACTION,WAIT,DEATH=0,1,2
+ACTION,WAIT,DEATH,GENERATION_OVER=0,1,2,3
 
 
 while SQL.check_table()==WAIT:
@@ -57,7 +60,6 @@ while SQL.check_table()==WAIT:
 print("Ready!")   
 Genomes=SQL.GatherGenomes()
 UsedGenomes=np.ones(Genomes.shape[0])
-
 with tf.Session() as sess: 
 
     #Vanilla Policy Setup
@@ -71,22 +73,24 @@ with tf.Session() as sess:
     while True:
         i+1
         keys=key_check()
-        check=SQL.check_table()
+        check=SQL.check_table() 
         if 'Q' in keys:
             break   
         if check==ACTION: #Mario Needs an Action
             frame_count=do_action(SQL,frame_count)
-        elif check==DEATH: #Mario has Died
+        elif check==DEATH or check==GENERATION_OVER: # Mario has Died
             print("DEATH")
-            break
             ep_history =SQL.gain_history()
             ep_history[:,2] = discount_rewards(ep_history[:,2])
+            result=np.vstack(ep_history[:,0])
+            result=np.reshape(result,[25,28,28,1])
+            UsedGenomes=np.ones(Genomes.shape[0]) # Reset Genomes
             feed_dict={myAgent.reward_holder:ep_history[:,2],
-                    myAgent.action_holder:ep_history[:,1],myAgent.state_in:np.vstack(ep_history[:,0])}
+                    myAgent.action_holder:ep_history[:,1],\
+                    myAgent.state_in:result,myAgent.condition:2,myAgent.used_genomes:UsedGenomes,myAgent.genomes:Genomes}
             grads = sess.run(myAgent.gradients, feed_dict=feed_dict)
             for idx,grad in enumerate(grads):
                 gradBuffer[idx] += grad
-
             if i % update_frequency == 0 and i != 0:
                 feed_dict= dict(zip(myAgent.gradient_holders, gradBuffer))
                 _ = sess.run(myAgent.update_batch, feed_dict=feed_dict)
@@ -94,6 +98,8 @@ with tf.Session() as sess:
                     gradBuffer[ix] = grad * 0
             SQL.clear_table()
             frame_count=0
+            if check==GENERATION_OVER:
+                Genomes=SQL.GatherGenomes()
             print("Round Complete")
             frame_count=do_action(SQL,frame_count)
             
