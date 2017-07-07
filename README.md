@@ -1,6 +1,7 @@
 # Super Meta MarIO
 
 ## Using genetic algorithms and reinforcement learning combined to beat Mario levels.
+![Background](Background.png)
 
 ## Preliminary Explanations
 
