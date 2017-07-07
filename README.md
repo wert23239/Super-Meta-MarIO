@@ -26,7 +26,7 @@ The problem isn't necessarily intuitive. For one it is very generalizable and th
 
 This is how the OpenCV tutorial under this was able to make a self-driving car in GTAV.
 
-[OpenCv "Screen Capture" (Python)](https://www.youtube.com/watch?v=v07t_GEIQzI)
+[OpenCv (Python)](https://www.youtube.com/watch?v=v07t_GEIQzI)
 
 ### Genetic Algorithms
 
@@ -36,7 +36,7 @@ This method is the first idea then would be useful if it could beat Mario. This 
 
 This can be understood way easier with the orignal MarIO video
 
-[MarIO "Genetic Algorithm" (Lua)](https://www.youtube.com/watch?v=qv6UVOQ0F44)
+[MarIO (Lua)](https://www.youtube.com/watch?v=qv6UVOQ0F44)
 
 
 #### Problem 1 (Infinte Time)
@@ -80,7 +80,7 @@ Another way to understand deep learning is trying to make an genetic alogritm th
 
 This repo contains a reinforcement learning algorithm playing Mario. This explains the similar problems discussed before. It also give negative score for going left which makes for a short sighted solution to certian problems even causing there learning curve to be convex.
 
-[DQN  "Reinforcement Learning"(Python Tenserflow)](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-0-q-learning-with-tables-and-neural-networks-d195264329d0)
+[DQN (Python Tenserflow)](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-0-q-learning-with-tables-and-neural-networks-d195264329d0)
 
 
 
@@ -102,6 +102,7 @@ With the timeout function in place that means even after an orgranism times out 
 #### Example
 
 This is a good example that showcases both a timeout and what non-continous and continous play looks like.
+![Continous Play](ContinousPlay.gif)
  
 
 #### Problem (Impossible Fitness Function)
@@ -117,6 +118,8 @@ To counteract this final problem. The organism can no longer be placed randomly.
 [Bizhawk](https://github.com/wert23239/BizHawk) Emulator Used
 
 [Meta-MarIO](https://github.com/wert23239/Meta-MarIO) Genetic Alogorithm
+
+Conda Requirements coming soon
 
 
 
