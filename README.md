@@ -24,9 +24,10 @@ The problem isn't necessarily intuitive. For one it is very generalizable and th
 
 #### Example
 
-This is how the OpenCV tutorial under this was able to make a self-driving car in GTAV.
+This is how the OpenCV tutorial under this was able to make a self-driving car in GTAV. You can see it by clicking here.
 
-[OpenCv (Python)](https://www.youtube.com/watch?v=v07t_GEIQzI)
+[![OpenCv (Python)](selfdrivingcar.gif)](https://www.youtube.com/watch?v=v07t_GEIQzI)
+
 
 ### Genetic Algorithms
 
