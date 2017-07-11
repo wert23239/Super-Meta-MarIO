@@ -14,6 +14,7 @@ import random
 from lib.getkeys import key_check
 from lib.reinforcement import agent,discount_rewards
 from lib.SQL import SQLCalls
+from sys import stdout
 import sqlite3
 POPULATION=25
 SQL=SQLCalls()
@@ -28,7 +29,7 @@ def process_img(original_image):
 def do_action(SQL,frame_count):
     print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
     new_screen=np.array(np.reshape(process_img(print_screen),[28,28,1]))
-    
+
     #Gain Action from Tenserflow
     a_dist = sess.run(myAgent.final_output,feed_dict={myAgent.genomes:Genomes,myAgent.state_in:[new_screen]\
                                                              ,myAgent.used_genomes:UsedGenomes,myAgent.condition:0\
@@ -43,7 +44,6 @@ def do_action(SQL,frame_count):
     frame_count+=1
     return frame_count
 
-
 #Pre Tenserflow Session Setup
 tf.reset_default_graph()
 myAgent = agent(lr=1e-2,s_size=28,a_size=4,h_size=64)
@@ -54,13 +54,12 @@ update_frequency = 5
 frame_count=0
 ACTION,WAIT,DEATH,GENERATION_OVER=0,1,2,3
 
-
 while SQL.check_table()==WAIT:
     pass
-print("Ready!")   
+print("Ready!")
 Genomes=SQL.GatherGenomes()
 UsedGenomes=np.ones(Genomes.shape[0])
-with tf.Session() as sess: 
+with tf.Session() as sess:
 
     #Vanilla Policy Setup
     sess.run(init)
@@ -73,9 +72,9 @@ with tf.Session() as sess:
     while True:
         i+1
         keys=key_check()
-        check=SQL.check_table() 
+        check=SQL.check_table()
         if 'Q' in keys:
-            break   
+            break
         if check==ACTION: #Mario Needs an Action
             frame_count=do_action(SQL,frame_count)
         elif check==DEATH or check==GENERATION_OVER: # Mario has Died
@@ -100,14 +99,15 @@ with tf.Session() as sess:
             frame_count=0
             if check==GENERATION_OVER:
                 Genomes=SQL.GatherGenomes()
-            print("Round Complete")
+            stdout.write('Round Complete \n')
             frame_count=do_action(SQL,frame_count)
-            
-             
+
+
 SQL.exit()
 #reset()
 #pause()
 #screen_record()
 #pause()
 
-
+for i in range(1000):
+    time.sleep(500)
