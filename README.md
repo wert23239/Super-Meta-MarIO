@@ -120,7 +120,7 @@ To counteract this final problem. The organism can no longer be placed randomly.
 
 ### Requirements:
 
--Windows Enviroment
+- Windows Enviroment
 
 - a GPU with CUDA and CUDnn (Optional)
 
