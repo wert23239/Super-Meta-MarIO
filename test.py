@@ -5,7 +5,8 @@ from datetime import datetime
 import sys
 import time
 from sys import stdout
-
+import numpy as np
+import matplotlib
 stdout.write('Hello from cx_Freeze\n')
 stdout.write('The current date is %s\n\n' %
              datetime.today().strftime('%B %d, %Y %H:%M:%S'))

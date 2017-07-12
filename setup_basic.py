@@ -11,17 +11,10 @@
 
 from cx_Freeze import setup, Executable
 import os
-os.environ['TCL_LIBRARY'] = "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs\\deeplearning\\tcl\\tcl8.6"
-os.environ['TK_LIBRARY'] = "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs\\deeplearning\\tcl\\tk8.6"
+os.environ['TCL_LIBRARY'] = "C:\\ProgramData\\Miniconda3\\tcl\\tcl8.6"
+os.environ['TK_LIBRARY'] = "C:\\ProgramData\\Miniconda3\\tcl\\tk8.6"
 
-
-base=None
-
-addtional_mods = ['matplotlib.backends.backend_tkagg',"tkinter","tkinter.filedialog"]
-#disclude_mods=['Tkinter']
-disclude_mods=[]
-package_mods= ['matplotlib','google','tensorflow','numpy']
-
+addtional_mods = []
 include_files=[
     "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs\\deeplearning\\Library\\bin\\cilkrts20.dll",
     "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs\\deeplearning\\Library\\bin\\ifdlg100.dll",
@@ -62,18 +55,20 @@ include_files=[
     "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs\\deeplearning\\Library\\bin\\mkl_vml_mc2.dll",
     "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs\\deeplearning\\Library\\bin\\mkl_vml_mc3.dll",
     "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs\\deeplearning\\Library\\bin\\svml_dispmd.dll",
-    "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs\\deeplearning\\DLLs\\tcl86t.dll",
-    "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs\\deeplearning\\DLLs\\tk86t.dll",
+    "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs\\deeplearning\\DLL\\tcl86t.dll",
+    "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs\\deeplearning\\DLL\\tk86t.dll"
 ]
+disclude_mods=['Tkinter']
+package_mods= ['numpy','matplotlib','tkinter']
+
 
 executables = [
-    Executable('main.py')
+    Executable('test.py')
 ]
-
 
 setup(name='tet',
       version='0.1',
       description='Sample cx_Freeze script',
-      options = {'build_exe': {'includes': addtional_mods,'include_files': include_files,'packages':package_mods,'excludes':disclude_mods }},
+      options = {'build_exe': {'includes': addtional_mods,'include_files': include_files ,'packages':package_mods,'excludes':disclude_mods }},
       executables=executables
       )
