@@ -88,7 +88,7 @@ with tf.Session() as sess:
             ep_history =SQL.gain_history()
             ep_history[:,2] = discount_rewards(ep_history[:,2])
             result=np.vstack(ep_history[:,0])
-            result=np.reshape(result,[25,28,28,1])
+            result=np.reshape(result,[POPULATION,28,28,1])
             UsedGenomes=np.ones(Genomes.shape[0]) # Reset Genomes
             feed_dict={myAgent.reward_holder:ep_history[:,2],
                

@@ -42,7 +42,7 @@ class agent():
     def __init__(self, lr, s_size,a_size,h_size,pop_size):
         #Placeholders
         self.state_in= tf.placeholder(shape=[None,s_size,s_size,1],dtype=tf.float32)
-        self.genomes= tf.placeholder(shape=[pop_size,15,3],dtype=tf.int32)       
+        self.genomes= tf.placeholder(shape=[pop_size,30,3],dtype=tf.int32)       
         self.used_genomes= tf.placeholder(shape=[pop_size],dtype=tf.int32)
         self.condition = tf.placeholder(tf.int32, shape=[], name="condition")
         self.training=tf.placeholder(shape=[1],dtype=tf.bool)

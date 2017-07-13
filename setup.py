@@ -17,7 +17,7 @@ os.environ['TK_LIBRARY'] = "C:\\Users\\Jonny\\AppData\\Local\\conda\\conda\\envs
 
 base=None
 
-addtional_mods = ['matplotlib.backends.backend_tkagg',"tkinter","tkinter.filedialog"]
+addtional_mods = ['matplotlib.backends.backend_tkagg',"tkinter","tkinter.filedialog","urllib.request"]
 #disclude_mods=['Tkinter']
 disclude_mods=[]
 package_mods= ['matplotlib','google','tensorflow','numpy']
