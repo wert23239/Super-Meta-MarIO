@@ -96,11 +96,11 @@ The whole process of reinforcement learning really is close to the current best 
 ## Prequisites
 
 
-### Timeout Function[To]
+### Timeout Function[TO]
 
 This idea comes from the Youtuber SethBling. In order to make a genetic algorithm evolve you have to let it play through the entire enviroment and when it is done it gets a score. This would normally mean in Mario you would have to let it play out one or three lives in its entirety. If at first the algorithm didn't even move this could take hours for a single generation. So instead SethBling decided if he knew the organism was not going anywhere and was at a stand still simply kill it off early. <b> This is concept is so important because it means an orgranism's life can end before Mario actually dies.</b>
 
-### Simple Continous Play[Sc]
+### Simple Continous Play[SC]
  
 With the timeout function in place that means even after an orgranism times out most of the time Mario is still alive. What SethBling did was just use this for speed and had the next organism start from the beginning. But, if instead you allow the next orgranism start from where the last timed out. You can create the concept Continous Play. This means again that not a single organsim has to try to beat the whole game.
 
@@ -115,11 +115,11 @@ This is a good example that showcases both a timeout and what non-continous and 
 
 The biggest consequence of Continous Play is that you can start from anywhere. While, this prevents a lot of overfitting it also means a guy who's only good a running could be placed at a place where you need a hard jump. Which causes a lot of randomness in the fitness. This creates to much randomness to ever evolve a complex organism. 
 
-## The Solution Probalisitic Continous Play (Level 1 )[PC] 
+## The Solution Probalisitic Continous Play[PCP] 
 
 To counteract this final problem. The organism can no longer be placed randomly. Instead there has to be an alogirthm that chooses where the genetic alogrithm are place. In other words a Machine Learning Alogrithm that helps a genetic alogirthm learn. This is where the whole Meta Machine Learning comes from. This alogirithm is a reinforcement alogrithm that's only goal is too score each unused orgranism and try to find the best on for the current situation. Then this orgranism will run till it times out.
 
-
+<!--
 #### Solves(Rapid Prototyping)[RP]
 
 Allows for a very robust guy who can go to each world without losing much generality. But, still too chaoitic and can't hillclimb.
@@ -128,7 +128,7 @@ Allows for a very robust guy who can go to each world without losing much genera
 Instead we use a method called Infinity Play. Now that lua and python code can go through each other smoothly you can create a loop. Basically, Machine Learning Layers. This means it would no be hard to have the genetic alorithms pick DQN reinforcement alogrithms instead of action and go even further. For this triple layer is probably not possible on moderns computers without very advanced alogirthms. You would need O(n) space larger each time. You would need to branch and bound all the useless orgranims (cells). So this would mean you would have to do some flavor of baysisan optimization which if it was something like SPEARMINT then this would mean at least another extra layer.  
 
 If you know the basics of Deep Learning. The genetic alogrtihm kind of works as a super slow activation function.  Almost a super complicated version of ReLu. 
-
+-->
 ## Using the following methods you can produce this equation
 
 ### Requirements:
