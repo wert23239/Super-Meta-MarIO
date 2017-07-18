@@ -44,7 +44,6 @@ class agent():
         self.state_in= tf.placeholder(shape=[None,s_size,s_size,1],dtype=tf.float32)
         self.genomes= tf.placeholder(shape=[pop_size,30,3],dtype=tf.int32)       
         self.used_genomes= tf.placeholder(shape=[pop_size],dtype=tf.int32)
-        self.condition = tf.placeholder(tf.int32, shape=[], name="condition")
         self.training=tf.placeholder(shape=[1],dtype=tf.bool)
         self.reward_holder = tf.placeholder(shape=[None],dtype=tf.float32)
         self.action_holder = tf.placeholder(shape=[None],dtype=tf.int32)
@@ -65,9 +64,7 @@ class agent():
 
         #Training/Testing Changes
          #Clone Image by Genome Size in Training
-        hidden_conv = tf.cond(self.condition <  1, lambda: tf.tile(hidden_conv,[pop_size,1]), lambda: hidden_conv)
-        #Change Recurrent Net to Match Inputs in Testing
-        hidden_rnn=tf.cond(self.condition < 1, lambda: hidden_rnn,lambda: tf.gather(hidden_rnn,self.action_holder)) 
+        hidden_conv = tf.tile(hidden_conv,[pop_size,1])
         
 
         combined=tf.concat([hidden_rnn,hidden_conv],1)
@@ -83,8 +80,8 @@ class agent():
         #The next six lines establish the training proceedure. We feed the reward and chosen action into the network
         #to compute the loss, and use it to update the network.
 
-
-        self.loss = -tf.reduce_mean(tf.log(self.output)*self.reward_holder)
+        self.responsible_output=tf.gather(self.final_output,self.action_holder)
+        self.loss = -tf.reduce_mean(tf.log(self.responsible_output)*self.reward_holder)
         tvars = tf.trainable_variables()
         self.gradient_holders = []
         for idx,var in enumerate(tvars):

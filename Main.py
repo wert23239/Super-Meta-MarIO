@@ -31,7 +31,7 @@ def do_action(SQL,frame_count):
 
     #Gain Action from Tenserflow
     a_dist = sess.run(myAgent.final_output,feed_dict={myAgent.genomes:Genomes,myAgent.state_in:[new_screen]\
-                                                             ,myAgent.used_genomes:UsedGenomes,myAgent.condition:0\
+                                                             ,myAgent.used_genomes:UsedGenomes\
                                                                  ,myAgent.action_holder:[10]})
     a = np.random.choice(a_dist,p=a_dist)
     a = np.argmax([a_dist] == a)
@@ -86,26 +86,28 @@ with tf.Session() as sess:
         elif check==DEATH or check==GENERATION_OVER: # Mario has Died
             #print("DEATH")
             ep_history =SQL.gain_history()
-            ep_history[:,2] = discount_rewards(ep_history[:,2])
-            result=np.vstack(ep_history[:,0])
-            result=np.reshape(result,[POPULATION,28,28,1])
-            UsedGenomes=np.ones(Genomes.shape[0]) # Reset Genomes
-            feed_dict={myAgent.reward_holder:ep_history[:,2],
-               
-                    myAgent.action_holder:ep_history[:,1],\
-                    myAgent.state_in:result,myAgent.condition:2,myAgent.used_genomes:UsedGenomes,myAgent.genomes:Genomes}
+            #ep_history[:,2] = discount_rewards(ep_history[:,2])
+            states=np.vstack(ep_history[:,0])
+            states=np.reshape(states,[POPULATION,28,28,1])
+            UsedGenomes=np.ones(Genomes.shape[0])
+            loss_total=0
+            for k in range(POPULATION):
+                feed_dict={myAgent.reward_holder:[ep_history[:,2][k]],myAgent.action_holder:[ep_history[:,1][k]],
+                    myAgent.state_in:[states[k]],myAgent.used_genomes:UsedGenomes,myAgent.genomes:Genomes}
+                grads,loss,ro = sess.run([myAgent.gradients,myAgent.loss,myAgent.responsible_output], feed_dict=feed_dict)
+                loss_total+=loss
+                for idx,grad in enumerate(grads):
+                    gradBuffer[idx] += grad
+            loss_total=loss_total/POPULATION
             print("Epoch " + str(epoch) + " Complete")
             epoch+=1
-            grads,loss = sess.run([myAgent.gradients,myAgent.loss], feed_dict=feed_dict)
-            print("Loss "+str(loss))
+            print("Loss "+str(loss_total))
             print()
-            for idx,grad in enumerate(grads):
-                gradBuffer[idx] += grad
             if i % update_frequency == 0 and i != 0:
                 feed_dict= dict(zip(myAgent.gradient_holders, gradBuffer))
                 _ = sess.run(myAgent.update_batch, feed_dict=feed_dict)
                 for ix,grad in enumerate(gradBuffer):
-                    gradBuffer[ix] = grad * 0
+                    gradBuffer[ix] = grad * 0      
             SQL.clear_table()
             frame_count=0
             if check==GENERATION_OVER:
@@ -118,6 +120,3 @@ SQL.exit()
 #pause()
 #screen_record()
 #pause()
-
-for i in range(1000):
-    time.sleep(500)
