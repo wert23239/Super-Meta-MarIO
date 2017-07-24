@@ -81,7 +81,7 @@ class agent():
         #to compute the loss, and use it to update the network.
 
         self.responsible_output=tf.gather(self.final_output,self.action_holder)
-        self.loss = -tf.reduce_mean(tf.log(self.responsible_output)*self.reward_holder)
+        self.loss = tf.reduce_mean(-tf.log(self.responsible_output)*self.reward_holder)
         tvars = tf.trainable_variables()
         self.gradient_holders = []
         for idx,var in enumerate(tvars):
