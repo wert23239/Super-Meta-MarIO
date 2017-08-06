@@ -20,14 +20,12 @@ SQL=SQLCalls()
 
 
 def process_img(original_image):
-    processed_img=cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
-    processed_img= cv2.resize(processed_img,(28,28))
-    return processed_img
-
+    processed_img= cv2.resize(original_image,(84,84))
+    return np.array(np.reshape(processed_img,[84,84,3]))
 
 def do_action(SQL,frame_count):
     print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
-    new_screen=np.array(np.reshape(process_img(print_screen),[28,28,1]))
+    new_screen=np.array(np.reshape(process_img(print_screen),[84,84,3]))
 
     #Gain Action from Tenserflow
     a_dist = sess.run(myAgent.final_output,feed_dict={myAgent.genomes:Genomes,myAgent.state_in:[new_screen]\
@@ -50,7 +48,9 @@ epoch=0
 frame_count=0
 ACTION,WAIT,DEATH,GENERATION_OVER=0,1,2,3
 img=ImageGrab.grab(bbox=(0,60,580,530))
+process_img(np.array(img))
 img.save("Test.png")
+exit()
 while SQL.check_table()==WAIT:
     pass
 print("Ready!")
