@@ -36,12 +36,12 @@ class SQLCalls():
         self.cur.execute("PRAGMA read_uncommitted = true;")
 
     def create_table(self):
-        self.cur.execute("create table rewards (ID integer  PRIMARY KEY,GenomeNum INT,Species INT, Genome INT, Score INT, Image array,Done INT)")
+        self.cur.execute("create table rewards (ID integer  PRIMARY KEY,GenomeNum INT,Species INT, Genome INT, Score INT, Image array, ImageEnd array,Done INT)")
         self.con.commit()
 
 
     def gain_history(self):
-        sql = '''Select image,GenomeNum,score
+        sql = '''Select image,GenomeNum,score,imageEnd
         from rewards where done=1 and score is not NULL'''
         self.cur.execute(sql)
         x=self.cur.fetchall()
@@ -76,6 +76,15 @@ class SQLCalls():
                 
         self.cur.execute(sql, (image,genomeNum,species,genome))
         self.con.commit()
+
+    def update_image(self,image2):  
+        sql = ''' UPDATE rewards
+                SET 
+                imageEnd=?
+                WHERE imageEnd is NULL and image is not NULL'''
+                
+        self.cur.execute(sql, (image2,))
+        self.con.commit()    
 
     def convert_to_species_genome(self,GenomeNum):
        #  print(GenomeNum)

@@ -9,16 +9,15 @@ import time
 import math
 import random
 from lib.getkeys import key_check
-from lib.reinforcement import agent,discount_rewards
+from lib.reinforcement import Qnetwork,updateTarget,updateTargetGraph
 from lib.SQL import SQLCalls
 from sys import stdout
 import sqlite3
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import numpy as np
+import os
 SQL=SQLCalls()
-
-
 def process_img(original_image):
     processed_img= cv2.resize(original_image,(84,84))
     return np.array(np.reshape(processed_img,[84,84,3]))
@@ -26,18 +25,19 @@ def process_img(original_image):
 def do_action(SQL,frame_count):
     print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
     new_screen=np.array(np.reshape(process_img(print_screen),[84,84,3]))
-
+    f_dict={mainQN.used_genomes:UsedGenomes,mainQN.genomes:Genomes,mainQN.imageIn:[new_screen]}
     #Gain Action from Tenserflow
-    a_dist = sess.run(myAgent.final_output,feed_dict={myAgent.genomes:Genomes,myAgent.state_in:[new_screen]\
-                                                             ,myAgent.used_genomes:UsedGenomes\
-                                                                 ,myAgent.action_holder:[10]})
-    a = np.random.choice(a_dist,p=a_dist)
-    a = np.argmax([a_dist] == a)
-    UsedGenomes[a]=-np.inf
+    a,before = sess.run([mainQN.predict,mainQN.Smooth],feed_dict=f_dict)
+    #a = np.random.choice(a_dist,p=a_dist)
+    #a = np.argmax([a_dist] == a)
+    print(a)
+    UsedGenomes[a]=1000
     #print("update "+ str(frame_count))
     species,genome=SQL.convert_to_species_genome(a+1)
+    SQL.update_image(new_screen)
     SQL.update_table(new_screen,int(a),species,genome)
     #print("update completed")
+    #Does one extra
     frame_count+=1
     return frame_count
 
@@ -48,35 +48,65 @@ epoch=0
 frame_count=0
 ACTION,WAIT,DEATH,GENERATION_OVER=0,1,2,3
 img=ImageGrab.grab(bbox=(0,60,580,530))
-process_img(np.array(img))
 img.save("Test.png")
-exit()
+
 while SQL.check_table()==WAIT:
     pass
 print("Ready!")
 Genomes=SQL.GatherGenomes()
 POPULATION=len(Genomes)
 print(POPULATION)
-UsedGenomes=np.ones(Genomes.shape[0])
+UsedGenomes=np.zeros(Genomes.shape[0])
 
 tf.reset_default_graph()
-myAgent = agent(lr=1e-2,s_size=28,a_size=4,h_size=64,pop_size=POPULATION)
-init = tf.global_variables_initializer()
-update_frequency = 5
+#Hyper Params
+batch_size = 32 #How many experiences to use for each training step.
+update_freq = 4 #How often to perform a training step.
+y = .99 #Discount factor on the target Q-values
+startE = 1 #Starting chance of random action
+endE = 0.1 #Final chance of random action
+anneling_steps = 10000. #How many steps of training to reduce startE to endE.
+pre_train_steps = 10000 #How many steps of random actions before training begins.
+max_epLength = 50 #The max allowed length of our episode.
+load_model = False #Whether to load a saved model.
+path = "./dqn" #The path to save our model to.
+h_size = 1024 #The size of the final convolutional layer before splitting it into Advantage and Value streams.
+tau = 0.001 #Rate to update target network toward primary network
+img_size=84 #Size of the image.
 
+
+tf.reset_default_graph()
+mainQN = Qnetwork(h_size,img_size,POPULATION,"Main")
+targetQN = Qnetwork(h_size,img_size,POPULATION,"Target")
+
+init = tf.global_variables_initializer()
+
+saver = tf.train.Saver()
+
+trainables = tf.trainable_variables()
+
+targetOps = updateTargetGraph(trainables,tau)
+
+
+e = startE
+stepDrop = (startE - endE)/anneling_steps
+total_steps = 0
+
+
+if not os.path.exists(path):
+    os.makedirs(path)
 
 with tf.Session() as sess:
 
     #Vanilla Policy Setup
     sess.run(init)
-    i = 0
-    gradBuffer = sess.run(tf.trainable_variables())
-    for ix,grad in enumerate(gradBuffer):
-        gradBuffer[ix] = grad * 0
+    if load_model == True:
+        print('Loading Model...')
+        ckpt = tf.train.get_checkpoint_state(path)
+        saver.restore(sess,ckpt.model_checkpoint_path)
 
     #Infinite Loop For Actions
     while True:
-        i+1
         keys=key_check()
         check=SQL.check_table()
         if 'Q' in keys:
@@ -84,12 +114,19 @@ with tf.Session() as sess:
         if check==ACTION: #Mario Needs an Action
             frame_count=do_action(SQL,frame_count)
         elif check==DEATH or check==GENERATION_OVER: # Mario has Died
-            #print("DEATH")
-            ep_history =SQL.gain_history()
+            #Update final one
+            print("here")
+            #print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
+            #new_screen=np.array(np.reshape(process_img(print_screen),[84,84,3]))
+            #SQL.update_image(new_screen)
+            ep_history =numpy.shuffle(SQL.gain_history())
+            break
             #ep_history[:,2] = discount_rewards(ep_history[:,2])
             states=np.vstack(ep_history[:,0])
-            states=np.reshape(states,[POPULATION,28,28,1])
-            UsedGenomes=np.ones(Genomes.shape[0])
+            states=np.reshape(states,[POPULATION,84,84,3])
+            states_after=np.vstack(ep_history[:,3])
+            states_after=np.reshape(states,[POPULATION,84,84,3])
+            UsedGenomes=np.zeros(Genomes.shape[0])
             loss_total=0
             for k in range(POPULATION):
                 feed_dict={myAgent.reward_holder:[ep_history[:,2][k]],myAgent.action_holder:[ep_history[:,1][k]],
@@ -108,6 +145,7 @@ with tf.Session() as sess:
                 _ = sess.run(myAgent.update_batch, feed_dict=feed_dict)
                 for ix,grad in enumerate(gradBuffer):
                     gradBuffer[ix] = grad * 0      
+            break
             SQL.clear_table()
             frame_count=0
             if check==GENERATION_OVER:
