@@ -25,12 +25,13 @@ def process_img(original_image):
 def do_action(SQL,frame_count):
     print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
     new_screen=np.array(np.reshape(process_img(print_screen),[84,84,3]))
-    f_dict={mainQN.used_genomes:UsedGenomes,mainQN.genomes:Genomes,mainQN.imageIn:[new_screen]}
+    f_dict={mainQN.used_genomes:UsedGenomes,mainQN.genomes:Genomes,\
+    mainQN.imageIn:[new_screen],mainQN.condition:0,mainQN.correct_action:[10],mainQN.correct_mean:[10]}
     #Gain Action from Tenserflow
     a,before = sess.run([mainQN.predict,mainQN.Smooth],feed_dict=f_dict)
     #a = np.random.choice(a_dist,p=a_dist)
     #a = np.argmax([a_dist] == a)
-    print(a)
+    #print(a)
     UsedGenomes[a]=1000
     #print("update "+ str(frame_count))
     species,genome=SQL.convert_to_species_genome(a+1)
@@ -60,7 +61,7 @@ UsedGenomes=np.zeros(Genomes.shape[0])
 
 tf.reset_default_graph()
 #Hyper Params
-batch_size = 32 #How many experiences to use for each training step.
+batch_size = 64 #How many experiences to use for each training step.
 update_freq = 4 #How often to perform a training step.
 y = .99 #Discount factor on the target Q-values
 startE = 1 #Starting chance of random action
@@ -76,8 +77,8 @@ img_size=84 #Size of the image.
 
 
 tf.reset_default_graph()
-mainQN = Qnetwork(h_size,img_size,POPULATION,"Main")
-targetQN = Qnetwork(h_size,img_size,POPULATION,"Target")
+mainQN = Qnetwork(h_size,img_size,POPULATION,batch_size,"Main")
+targetQN = Qnetwork(h_size,img_size,POPULATION,batch_size,"Target")
 
 init = tf.global_variables_initializer()
 
@@ -115,37 +116,55 @@ with tf.Session() as sess:
             frame_count=do_action(SQL,frame_count)
         elif check==DEATH or check==GENERATION_OVER: # Mario has Died
             #Update final one
-            print("here")
             #print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
             #new_screen=np.array(np.reshape(process_img(print_screen),[84,84,3]))
             #SQL.update_image(new_screen)
-            ep_history =numpy.shuffle(SQL.gain_history())
-            break
-            #ep_history[:,2] = discount_rewards(ep_history[:,2])
-            states=np.vstack(ep_history[:,0])
-            states=np.reshape(states,[POPULATION,84,84,3])
-            states_after=np.vstack(ep_history[:,3])
-            states_after=np.reshape(states,[POPULATION,84,84,3])
+            trainBatch=SQL.gain_history()
+            np.random.shuffle(trainBatch)
+            trainBatch=trainBatch[0:batch_size]
+            states=np.vstack(trainBatch[:,0])
+            states=np.reshape(states,[batch_size,84,84,3])
+            states_after=np.vstack(trainBatch[:,3])
+            states_after=np.reshape(states,[batch_size,84,84,3])
             UsedGenomes=np.zeros(Genomes.shape[0])
-            loss_total=0
-            for k in range(POPULATION):
-                feed_dict={myAgent.reward_holder:[ep_history[:,2][k]],myAgent.action_holder:[ep_history[:,1][k]],
-                    myAgent.state_in:[states[k]],myAgent.used_genomes:UsedGenomes,myAgent.genomes:Genomes}
-                grads,loss,ro = sess.run([myAgent.gradients,myAgent.loss,myAgent.responsible_output], feed_dict=feed_dict)
-                loss_total+=loss
-                for idx,grad in enumerate(grads):
-                    gradBuffer[idx] += grad
-            loss_total=loss_total/POPULATION
+            #ep_history[:,2] = discount_rewards(ep_history[:,2])
+            action_list=[]
+            answer_list=[]
+            for k in range(batch_size):
+                m_dict={mainQN.used_genomes:UsedGenomes,mainQN.genomes:Genomes,
+                        mainQN.imageIn:[states_after[k]],mainQN.condition:0,
+                        mainQN.correct_action:[10],mainQN.correct_mean:[10]}
+                t_dict={targetQN.used_genomes:UsedGenomes,targetQN.genomes:Genomes,
+                        targetQN.imageIn:[states_after[k]],targetQN.condition:0,
+                        targetQN.correct_action:[10],targetQN.correct_mean:[10]}
+                Q1 = sess.run(mainQN.predict,feed_dict=m_dict)
+                action_list.append(Q1)
+                mean,Q2,Value = sess.run([targetQN.Mean,targetQN.Qout,targetQN.Value],feed_dict=t_dict)
+                answer_list.append(Q2[0][Q1])
+            UsedGenomesBatch=np.zeros(batch_size)
+            end_multiplier = -(trainBatch[:,4] - 1)
+            doubleQ = np.array(answer_list)
+            targetQ = trainBatch[:,2] + (y*doubleQ * end_multiplier)
+            mean_list=[]
+            #Update the network with our target values.
+            for k in range(batch_size):
+                m_dict={mainQN.used_genomes:UsedGenomes,mainQN.genomes:Genomes,
+                        mainQN.imageIn:[states[k]],mainQN.condition:0,
+                        mainQN.correct_action:[10],mainQN.correct_mean:[10]}
+                mean = sess.run([mainQN.Mean],feed_dict=m_dict)
+                mean_list.append(mean[0])
+            final_dict={mainQN.used_genomes:UsedGenomes,mainQN.genomes:Genomes,
+                        mainQN.imageIn:states,mainQN.condition:1,
+                        mainQN.correct_action:trainBatch[:,1],mainQN.correct_mean:np.hstack(mean_list),
+                       mainQN.targetQ:targetQ}
+            _,loss =sess.run([mainQN.updateModel,mainQN.loss], \
+                feed_dict=final_dict)
+            updateTarget(targetOps,sess)
             print("Epoch " + str(epoch) + " Complete")
             epoch+=1
-            print("Loss "+str(loss_total))
+            print("Loss "+str(loss))
             print()
-            if i % update_frequency == 0 and i != 0:
-                feed_dict= dict(zip(myAgent.gradient_holders, gradBuffer))
-                _ = sess.run(myAgent.update_batch, feed_dict=feed_dict)
-                for ix,grad in enumerate(gradBuffer):
-                    gradBuffer[ix] = grad * 0      
-            break
+
             SQL.clear_table()
             frame_count=0
             if check==GENERATION_OVER:
