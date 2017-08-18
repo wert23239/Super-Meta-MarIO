@@ -1,6 +1,7 @@
 #Custom
 Test.png
-
+/dqn
+build.zip
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -29,7 +29,7 @@ def process_img(original_image):
 ## A value at 1 or bigger represents 100%
 #https://stackoverflow.com/a/15860757
 def update_progress(progress):
-    barLength = 10 # Modify this to change the length of the progress bar
+    barLength = 15 # Modify this to change the length of the progress bar
     status = ""
     if isinstance(progress, int):
         progress = float(progress)
@@ -43,9 +43,9 @@ def update_progress(progress):
         progress = 1
         status = "Done...\r\n"
     block = int(round(barLength*progress))
-    text = print("\rPercent: [{0}] {1}% {2}").format( "#"*block + "-"*(barLength-block), progress*100, status)
-    sys.stdout.write(text)
-    sys.stdout.flush()
+    text = str("\rPercent: [{0}] {1:02.0f}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status))
+    stdout.write(text)
+    stdout.flush()
 
 def do_action(SQL,frame_count):
     print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
@@ -60,11 +60,14 @@ def do_action(SQL,frame_count):
     UsedGenomes[a]=1000
     #print("update "+ str(frame_count))
     species,genome=SQL.convert_to_species_genome(a+1)
+    frame_count+=1
+    if frame_count<=POPULATION:
+        update_progress(frame_count/POPULATION)
     SQL.update_image(new_screen)
     SQL.update_table(new_screen,int(a),species,genome)
     #print("update completed")
     #Does one extra
-    frame_count+=1
+    
     return frame_count
 
 #Pre Tenserflow Session Setup
@@ -99,8 +102,10 @@ if SQL.check_table()==RESTORE:
 Genomes=SQL.GatherGenomes()
 POPULATION=len(Genomes)
 print(POPULATION)
+
 UsedGenomes=np.zeros(Genomes.shape[0])
 print("Load Model is " + str(load_model) )
+print()
 tf.reset_default_graph()
 batch_size = POPULATION//4 #How many experiences to use for each training step.
 
@@ -121,7 +126,7 @@ stepDrop = (startE - endE)/anneling_steps
 total_steps = 0
 
 print("Ready!")
-
+print()
 
 if not os.path.exists(path):
     os.makedirs(path)
@@ -134,7 +139,8 @@ with tf.Session() as sess:
         print('Loading Model...')
         ckpt = tf.train.get_checkpoint_state(path)
         saver.restore(sess,ckpt.model_checkpoint_path)
-
+        epoch=int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
+    print()
     #Infinite Loop For Actions
     while True:
         check=SQL.check_table()
@@ -191,8 +197,9 @@ with tf.Session() as sess:
             print("Loss "+str(loss))
             print()
             if epoch%3==0: 
-                saver.save(sess,path+'/model-'+str(epoch)+'.ckpt')
+                saver.save(sess,path+'/model-'+str(epoch)+'.ckpt',global_step=epoch)
                 print("Saved Model")
+                print()
             SQL.clear_table()
             frame_count=0
             if check==GENERATION_OVER:
