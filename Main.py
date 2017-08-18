@@ -22,6 +22,31 @@ def process_img(original_image):
     processed_img= cv2.resize(original_image,(84,84))
     return np.array(np.reshape(processed_img,[84,84,3]))
 
+
+# update_progress() : Displays or updates a console progress bar
+## Accepts a float between 0 and 1. Any int will be converted to a float.
+## A value under 0 represents a 'halt'.
+## A value at 1 or bigger represents 100%
+#https://stackoverflow.com/a/15860757
+def update_progress(progress):
+    barLength = 10 # Modify this to change the length of the progress bar
+    status = ""
+    if isinstance(progress, int):
+        progress = float(progress)
+    if not isinstance(progress, float):
+        progress = 0
+        status = "error: progress var must be float\r\n"
+    if progress < 0:
+        progress = 0
+        status = "Halt...\r\n"
+    if progress >= 1:
+        progress = 1
+        status = "Done...\r\n"
+    block = int(round(barLength*progress))
+    text = print("\rPercent: [{0}] {1}% {2}").format( "#"*block + "-"*(barLength-block), progress*100, status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
+
 def do_action(SQL,frame_count):
     print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
     new_screen=np.array(np.reshape(process_img(print_screen),[84,84,3]))
@@ -47,21 +72,11 @@ def do_action(SQL,frame_count):
 
 epoch=0
 frame_count=0
-ACTION,WAIT,DEATH,GENERATION_OVER=0,1,2,3
+ACTION,WAIT,DEATH,GENERATION_OVER,RESTORE=0,1,2,3,4
 img=ImageGrab.grab(bbox=(0,60,580,530))
 img.save("Test.png")
 
-while SQL.check_table()==WAIT:
-    pass
-print("Ready!")
-Genomes=SQL.GatherGenomes()
-POPULATION=len(Genomes)
-print(POPULATION)
-UsedGenomes=np.zeros(Genomes.shape[0])
-
-tf.reset_default_graph()
 #Hyper Params
-batch_size = 64 #How many experiences to use for each training step.
 update_freq = 4 #How often to perform a training step.
 y = .99 #Discount factor on the target Q-values
 startE = 1 #Starting chance of random action
@@ -76,7 +91,19 @@ tau = 0.001 #Rate to update target network toward primary network
 img_size=84 #Size of the image.
 
 
+
+while SQL.check_table()==WAIT:
+    pass
+if SQL.check_table()==RESTORE:
+    load_model=True
+Genomes=SQL.GatherGenomes()
+POPULATION=len(Genomes)
+print(POPULATION)
+UsedGenomes=np.zeros(Genomes.shape[0])
+print("Load Model is " + str(load_model) )
 tf.reset_default_graph()
+batch_size = POPULATION//4 #How many experiences to use for each training step.
+
 mainQN = Qnetwork(h_size,img_size,POPULATION,batch_size,"Main")
 targetQN = Qnetwork(h_size,img_size,POPULATION,batch_size,"Target")
 
@@ -93,6 +120,8 @@ e = startE
 stepDrop = (startE - endE)/anneling_steps
 total_steps = 0
 
+print("Ready!")
+
 
 if not os.path.exists(path):
     os.makedirs(path)
@@ -108,11 +137,8 @@ with tf.Session() as sess:
 
     #Infinite Loop For Actions
     while True:
-        keys=key_check()
         check=SQL.check_table()
-        if 'Q' in keys:
-            break
-        if check==ACTION: #Mario Needs an Action
+        if check==ACTION or check==RESTORE: #Mario Needs an Action
             frame_count=do_action(SQL,frame_count)
         elif check==DEATH or check==GENERATION_OVER: # Mario has Died
             #Update final one
@@ -164,7 +190,9 @@ with tf.Session() as sess:
             epoch+=1
             print("Loss "+str(loss))
             print()
-
+            if epoch%3==0: 
+                saver.save(sess,path+'/model-'+str(epoch)+'.ckpt')
+                print("Saved Model")
             SQL.clear_table()
             frame_count=0
             if check==GENERATION_OVER:

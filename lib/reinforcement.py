@@ -80,9 +80,10 @@ class Qnetwork():
         sequence_output, state = tf.nn.dynamic_rnn(tf.contrib.rnn.LSTMCell(64),\
                                             tf.cast(self.genomes,tf.float32),dtype=tf.float32,sequence_length=length(self.genomes),scope=myScope+'_rnn')
         last = last_relevant(sequence_output, length(self.genomes)) 
-        hidden_rnn= slim.fully_connected(last,64,biases_initializer=None,activation_fn=tf.nn.relu)
-        hidden_rnn=tf.cond(self.condition < 1, lambda: hidden_rnn,lambda: tf.gather(hidden_rnn,self.correct_action)) 
-        combined=tf.concat([hidden_rnn,hidden_conv],1)
+        hidden_rnn= slim.fully_connected(last,h_size,biases_initializer=None,activation_fn=tf.nn.relu)
+        hidden_rnn_2= slim.fully_connected(hidden_rnn,h_size//2,biases_initializer=None,activation_fn=tf.nn.relu)
+        hidden_rnn_final=tf.cond(self.condition < 1, lambda: hidden_rnn_2,lambda: tf.gather(hidden_rnn_2,self.correct_action)) 
+        combined=tf.concat([hidden_rnn_final,hidden_conv],1)
         #
         #Change Recurrent Net to Match Inputs in Testing
         #hidden_rnn=tf.cond(self.condition < 1, lambda: hidden_rnn,lambda: tf.gather(hidden_rnn,self.action_holder)) 
