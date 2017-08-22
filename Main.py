@@ -53,7 +53,11 @@ def do_action(SQL,frame_count):
     f_dict={mainQN.used_genomes:UsedGenomes,mainQN.genomes:Genomes,\
     mainQN.imageIn:[new_screen],mainQN.condition:0,mainQN.correct_action:[10],mainQN.correct_mean:[10]}
     #Gain Action from Tenserflow
-    a,before = sess.run([mainQN.predict,mainQN.Smooth],feed_dict=f_dict)
+    a,value,out = sess.run([mainQN.predict,mainQN.Value,mainQN.Qout],feed_dict=f_dict)
+    if(a==0):
+        print(a)
+        print(value)
+        print(out)
     #a = np.random.choice(a_dist,p=a_dist)
     #a = np.argmax([a_dist] == a)
     #print(a)
@@ -189,7 +193,7 @@ with tf.Session() as sess:
                         mainQN.imageIn:states,mainQN.condition:1,
                         mainQN.correct_action:trainBatch[:,1],mainQN.correct_mean:np.hstack(mean_list),
                        mainQN.targetQ:targetQ}
-            _,loss =sess.run([mainQN.updateModel,mainQN.loss], \
+            _,loss,Qs =sess.run([mainQN.updateModel,mainQN.loss,mainQN.Qout], \
                 feed_dict=final_dict)
             updateTarget(targetOps,sess)
             print("Epoch " + str(epoch) + " Complete")

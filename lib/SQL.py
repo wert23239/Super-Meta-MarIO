@@ -110,7 +110,7 @@ class SQLCalls():
             IndividualGenome.append([int(x) for x in content.split()])
         
         Genomes.append(IndividualGenome) # Pad Last Genome
-        Genomes=pad_sequences(Genomes,maxlen=30,padding='post') # Allows RNN to Interpet Dynamic Sequence Length
+        Genomes=pad_sequences(Genomes,maxlen=300,padding='post') # Allows RNN to Interpet Dynamic Sequence Length
         return Genomes
     def exit(self): 
         self.cur.close()

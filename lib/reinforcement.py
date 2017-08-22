@@ -51,7 +51,7 @@ def updateTarget(op_holder,sess):
 
 class Qnetwork():
     def __init__(self,h_size,s_size,POPULATION,BATCH,myScope):
-        self.genomes= tf.placeholder(shape=[POPULATION,30,3],dtype=tf.int32)   
+        self.genomes= tf.placeholder(shape=[POPULATION,300,3],dtype=tf.int32)   
         self.condition = tf.placeholder(tf.int32, shape=[], name="condition")
         self.correct_action=tf.placeholder(shape=[None], dtype=tf.int32)
         self.correct_mean=tf.placeholder(shape=[None], dtype=tf.float32)
@@ -89,7 +89,7 @@ class Qnetwork():
         #hidden_rnn=tf.cond(self.condition < 1, lambda: hidden_rnn,lambda: tf.gather(hidden_rnn,self.action_holder)) 
         self.hidden_combined= slim.fully_connected(combined,h_size,biases_initializer=None,activation_fn=tf.nn.relu)
         self.hidden_combined_2= slim.fully_connected(self.hidden_combined,h_size//4,biases_initializer=None,activation_fn=tf.nn.relu)
-        self.regression= slim.fully_connected(self.hidden_combined_2,1,biases_initializer=None,activation_fn=tf.nn.tanh)
+        self.regression= slim.fully_connected(self.hidden_combined_2,1,biases_initializer=None,activation_fn=None)
         self.Advantage=tf.cond(self.condition <  1, 
         lambda: tf.reshape(self.regression,[1,POPULATION]), 
         lambda: tf.reshape(self.regression,[1,BATCH])[0])
