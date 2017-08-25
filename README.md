@@ -3,6 +3,10 @@
 ## Using genetic algorithms and reinforcement learning combined to beat Mario levels.
 ![Background](Background.png)
 
+## Release is Out
+<b> If you go to the Releases you will be able to download the fully working code. Do this before cloning this repo and trying to get it to work. </b>
+
+
 ## Preliminary Explanation
 
 The whole concept of beating a game using code can be confusing. This is because something like symbolic AI, Genetic Algorithms and Reinforcement Learning all look similar when you watch a game but each method is differnt. To help make this repo make more sense this small helper guide to explain these elaborate theories and some problems with them are.
