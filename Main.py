@@ -80,8 +80,10 @@ def do_action(SQL,frame_count):
 epoch=0
 frame_count=0
 ACTION,WAIT,DEATH,GENERATION_OVER,RESTORE=0,1,2,3,4
+print("Taking picture of the top-left of the screen.")
+print("Please check image to ensure it only displays the emulator.")
 img=ImageGrab.grab(bbox=(0,60,580,530))
-img.save("Test.png")
+img.save("../Test.png")
 
 #Hyper Params
 update_freq = 4 #How often to perform a training step.
