@@ -46,7 +46,6 @@ def update_progress(progress):
     text = str("\rPercent: [{0}] {1:02.0f}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status))
     stdout.write(text)
     stdout.flush()
-
 def do_action(SQL,frame_count):
     print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
     new_screen=np.array(np.reshape(process_img(print_screen),[84,84,3]))
