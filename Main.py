@@ -86,7 +86,7 @@ img.save("../Test.png")
 
 #Hyper Params
 update_freq = 4 #How often to perform a training step.
-y = .99 #Discount factor on the target Q-values
+y = .1 #Discount factor on the target Q-values
 startE = 1 #Starting chance of random action
 endE = 0.1 #Final chance of random action
 anneling_steps = 10000. #How many steps of training to reduce startE to endE.
@@ -164,7 +164,6 @@ with tf.Session() as sess:
             states_after=np.vstack(trainBatch[:,3])
             states_after=np.reshape(states,[batch_size,84,84,3])
             UsedGenomes=np.zeros(Genomes.shape[0])
-            #ep_history[:,2] = discount_rewards(ep_history[:,2])
             action_list=[]
             answer_list=[]
             for k in range(batch_size):
