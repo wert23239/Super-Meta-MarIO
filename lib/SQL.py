@@ -35,6 +35,7 @@ class SQLCalls():
         self.cur.execute("PRAGMA journal_mode=WAL;")
         self.cur.execute("PRAGMA read_uncommitted = true;")
 
+
     def create_table(self):
         self.cur.execute('''create table rewards (
             ID integer  PRIMARY KEY,GenomeNum INT,Species INT, 
@@ -42,6 +43,62 @@ class SQLCalls():
         ImageEnd array,Done INT, Status INT)''')
         self.con.commit()
 
+    def clear_permanent_tables(self):  
+        self.cur.execute('''Delete from example_images
+        ''')  
+        self.cur.execute('''Delete from example_genes
+        ''') 
+        self.cur.execute('''Delete from example_timestamps
+        ''') 
+        self.con.commit()
+
+    def create_permanent_image_table(self):
+        self.cur.execute('''create table example_images (
+        ID integer  PRIMARY KEY, GenomeKey TEXT, Score INT ,Image array, 
+        ImageEnd array)''')
+        self.con.commit()
+
+    def create_permanent_timestamp_table(self):
+        self.cur.execute('''create table example_timestamps (
+        ID integer  PRIMARY KEY, timestamp TEXT)''')
+        self.con.commit()
+
+    def create_permanent_gene_table(self):
+        self.cur.execute('''create table example_genes (
+        ID integer  PRIMARY KEY, GenomeKey TEXT, GeneImage array)''')
+        self.con.commit()
+
+    def insert_into_permanent_tables(self,genomeImages,trainBatch,timeStamp):
+        self.insert_timestamp(timeStamp)
+        self.insert_genome_images(trainBatch,timeStamp)
+        self.insert_examples_genes(genomeImages,timeStamp)
+        self.con.commit()
+    def insert_timestamp(self,timeStamp):
+        sql=''' INSERT INTO example_timestamps
+                (timestamp)
+                VALUES
+                (?)'''
+        self.cur.execute(sql, (str(timeStamp),))
+    def insert_genome_images(self,trainBatch,timeStamp):
+        states=trainBatch[:,0]
+        GenomeNum=trainBatch[:,1]
+        score=trainBatch[:,2]
+        states_after=trainBatch[:,3]
+        for i in range(len(trainBatch)):
+            sql=''' INSERT INTO example_images
+                    (GenomeKey,Score,Image,ImageEnd)
+                    VALUES
+                    (?,?,?,?)'''
+            self.cur.execute(sql, (str(timeStamp)+str(GenomeNum[i]),score[i],states[i],states_after[i]))
+        
+
+    def insert_examples_genes(self,genomeImages,timeStamp):
+        for i in range(len(genomeImages)):
+            sql = ''' INSERT INTO example_genes
+               (GenomeKey,GeneImage)
+               VALUES
+               (?,?)'''
+            self.cur.execute(sql, (str(timeStamp)+str(i),genomeImages[i]))   
 
     def gain_history(self):
         sql = '''Select image,GenomeNum,score,imageEnd,status
@@ -90,7 +147,6 @@ class SQLCalls():
         self.con.commit()    
 
     def convert_to_species_genome(self,GenomeNum):
-       #  print(GenomeNum)
         self.cur.execute("SELECT DISTINCT Species,Genome FROM Genes where GenomeNum="+ str(GenomeNum) ) # Fix this
         species,genome=self.cur.fetchone()
         return species,genome
@@ -107,11 +163,11 @@ class SQLCalls():
                 currentGenome=int(genome)
                 Genomes.append(IndividualGenome)
                 IndividualGenome=[]
-            IndividualGenome.append([int(x) for x in content.split()])
+            IndividualGenome.append([float(x) for x in content.split()])
         
         Genomes.append(IndividualGenome) # Pad Last Genome
-        Genomes=pad_sequences(Genomes,maxlen=300,padding='post') # Allows RNN to Interpet Dynamic Sequence Length
-        return Genomes
+        #Genomes=pad_sequences(Genomes,maxlen=300,padding='post') # Allows RNN to Interpet Dynamic Sequence Length
+        return np.array(Genomes)
     def exit(self): 
         self.cur.close()
         self.con.close()

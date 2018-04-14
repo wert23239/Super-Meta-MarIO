@@ -112,7 +112,7 @@ class Qnetwork():
         
         self.td_error = tf.square(self.targetQ - self.Qout)
         self.loss = tf.reduce_mean(self.td_error)
-        self.trainer = tf.train.RMSPropOptimizer(learning_rate=0.0003,momentum=0.1,centered=True)
+        self.trainer = tf.train.AdamOptimizer(learning_rate=0.0001)
         self.updateModel = self.trainer.minimize(self.loss)
 
 class agent():
