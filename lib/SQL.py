@@ -2,6 +2,7 @@ import sqlite3
 import numpy as np
 import io
 import cv2
+import random
 from PIL import ImageGrab
 from keras.preprocessing.sequence import pad_sequences
 ACTION,WAIT,DEATH=0,1,2
@@ -85,11 +86,13 @@ class SQLCalls():
         score=trainBatch[:,2]
         states_after=trainBatch[:,3]
         for i in range(len(trainBatch)):
-            sql=''' INSERT INTO example_images
-                    (GenomeKey,Score,Image,ImageEnd)
-                    VALUES
-                    (?,?,?,?)'''
-            self.cur.execute(sql, (str(timeStamp)+str(GenomeNum[i]),score[i],states[i],states_after[i]))
+            chance=random.randint(0,100)
+            if score[i]==-1 or chance>90:
+                sql=''' INSERT INTO example_images
+                        (GenomeKey,Score,Image,ImageEnd)
+                        VALUES
+                        (?,?,?,?)'''
+                self.cur.execute(sql, (str(timeStamp)+str(GenomeNum[i]),score[i],states[i],states_after[i]))
         
 
     def insert_examples_genes(self,genomeImages,timeStamp):
@@ -98,7 +101,7 @@ class SQLCalls():
                (GenomeKey,GeneImage)
                VALUES
                (?,?)'''
-            self.cur.execute(sql, (str(timeStamp)+str(i),genomeImages[i]))   
+            self.cur.execute(sql, (str(timeStamp)+str(i+1),genomeImages[i]))   
 
     def gain_history(self):
         sql = '''Select image,GenomeNum,score,imageEnd,status
@@ -156,7 +159,6 @@ class SQLCalls():
         self.cur.execute("SELECT GenomeNum,Gene,GeneContent FROM Genes ORDER BY Genome,Gene")
         currentGenome=1
         IndividualGenome=[]
-
         #Store All Genes for each Genome
         for genome,gene,content in self.cur.fetchall():
             if genome!=currentGenome:

@@ -35,24 +35,28 @@ np.set_printoptions(precision=1)
 def setup_genomes():
     BoxRadius=6
     BoxLength=BoxRadius*2+1
-    BoxArea=(BoxLength)
+    BoxArea=(BoxLength)*(BoxLength)
     gene_image=np.empty([len(Genomes),BoxLength,BoxLength,12])
     gene_image.fill(0)
     BUTTON_AMOUNT=6
     for Genome_Num,Genome in enumerate(Genomes):
         for gene in Genome:
             genome_type=0
-            if gene[0]>BoxLength:
+            #print(gene[0],Genome_Num,BoxArea*2)
+            if gene[0]<BoxArea:
                 pass
                 #print("Normal Input")
-            if gene[1]>BoxLength:
+            elif gene[0]>BoxArea*2:    
+                #print("bias")
+                continue
+            else:
                 pass
-                #print("Inverse Input")
+               # print("Inverse Input")
                 genome_type+=BUTTON_AMOUNT
             genome_type+=int(gene[1]-1000001) 
             if genome_type>=0:
-                # print X,Y,Type(Type of Input,Button Pressed)
-                gene_image[Genome_Num][int(gene[0]%(BoxArea)//BoxArea)][int(gene[0]%(BoxArea)%13)][genome_type]=gene[2] 
+                # print ,Y,Type(Type of Input,Button Pressed)
+                gene_image[Genome_Num][int(gene[0]%(BoxArea)//BoxLength)][int(gene[0]%(BoxArea)%13)][genome_type]=gene[2] 
     return gene_image
 
 def update_progress(progress):
@@ -98,7 +102,7 @@ def do_action(SQL,frame_count):
         a=1
     species,genome=SQL.convert_to_species_genome(a+1)
     SQL.update_image(new_screen)
-    SQL.update_table(new_screen,int(a),species,genome)
+    SQL.update_table(new_screen,int(a)+1,species,genome)
     
     return frame_count
 
