@@ -19,7 +19,7 @@ import tensorflow.contrib.slim as slim
 import numpy as np
 import os
 SQL=SQLCalls()
-SQL.clear_permanent_tables()
+#SQL.clear_permanent_tables()
 def process_img(original_image):
     processed_img= cv2.resize(original_image,(580,580))
     return np.array(processed_img)
@@ -148,10 +148,10 @@ print("Load Model is " + str(load_model) )
 print()
 tf.reset_default_graph()
 batch_size = POPULATION//4 #How many experiences to use for each training step.
-
-mainQN = Qnetwork(h_size,img_size,POPULATION,batch_size,"Main")
-targetQN = Qnetwork(h_size,img_size,POPULATION,batch_size,"Target")
-
+#mainQN = Qnetwork(h_size,img_size,POPULATION,batch_size,"Main")
+#targetQN = Qnetwork(h_size,img_size,POPULATION,batch_size,"Target")
+mainQN=FrozenValueNetwork()
+mainQN_model=mainQN.make_model()
 init = tf.global_variables_initializer()
 
 saver = tf.train.Saver()

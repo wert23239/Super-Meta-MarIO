@@ -47,7 +47,43 @@ def updateTarget(op_holder,sess):
         sess.run(op)
 
 
-#Using the method the value   
+#Using the method the value  
+
+class FrozenValueNetwork():
+    def __init__(self):
+        pass
+
+    def make_model(self):
+        image_model_inputs = Input(shape=X[0].shape,dtype='float32',name='main_image')
+        image_model=Conv2D(16, (2, 2), padding='valid', activation='relu')(image_model_inputs)
+        image_model=Conv2D(16, (2, 2), padding='valid', activation='relu')(image_model)
+
+        image_model=Conv2D(32, (1,1),strides=2, padding='valid', activation='relu')(image_model)
+        image_model=Conv2D(32, (1,1),strides=2, padding='valid', activation='relu')(image_model)
+
+        image_model=Conv2D(8, (1,1),strides=3, padding='same', activation='relu')(image_model)
+        image_model=Conv2D(8, (1,1),strides=2, padding='same', activation='relu')(image_model)
+        
+        image_model=Flatten()(image_model)
+        
+        gene_model_inputs = Input(shape=X_gene[0].shape,dtype='float32',name='gene_image')
+        gene_model=Conv2D(16, (2, 2), padding='valid', activation='relu')(gene_model_inputs)
+        gene_model=Conv2D(16, (2, 2), padding='valid', activation='relu')(gene_model)
+        
+        # gene_model=Conv2D(8, (1,1),strides=3, padding='same', activation='relu')(gene_model)
+        #gene_model=Conv2D(8, (1,1),strides=2, padding='same', activation='relu')(gene_model)
+        
+        gene_model=Flatten()(gene_model)
+        
+        combined_model=concatenate([image_model,gene_model])
+        
+        combined_model=Dense(32, activation='relu')(combined_model)
+        combined_model=Dense(8, activation='relu')(combined_model)
+        combined_model_preditions=Dense(2, activation='softmax')(combined_model)
+        model=Model(inputs=[image_model_inputs,gene_model_inputs],outputs=combined_model_preditions)
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])    
+        return model
+
 
 class Qnetwork():
     def __init__(self,h_size,s_size,POPULATION,BATCH,myScope):
