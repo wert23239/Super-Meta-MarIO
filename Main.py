@@ -13,6 +13,9 @@ from lib.getkeys import key_check
 from lib.reinforcement import Qnetwork,updateTarget,updateTargetGraph
 from lib.SQL import SQLCalls
 from sys import stdout
+from keras import backend as K
+from keras.models import load_model
+from keras.models import Model,Sequential
 import sqlite3
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
@@ -80,6 +83,10 @@ def update_progress(progress):
 def do_action(SQL,frame_count):
     print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
     new_screen=process_img(print_screen)
+    image_duplicated=np.tile(new_screen, (POPULATION,1,1,1))
+    history=model.predict([image_duplicated,gene_images],batch_size=32)
+    results=history[:,1]*UsedGenomes
+
     #f_dict={mainQN.used_genomes:UsedGenomes,mainQN.genomes:Genomes,\
     #mainQN.imageIn:[new_screen],mainQN.condition:0,mainQN.correct_action:[10],mainQN.correct_mean:[10]}
     #Gain Action from Tenserflow
@@ -95,7 +102,8 @@ def do_action(SQL,frame_count):
     # species,genome=SQL.convert_to_species_genome(a+1)
     frame_count+=1
     if frame_count<=POPULATION:
-        a=FakeGenomes.pop(0)
+        a=np.argmax(results)
+        UsedGenomes[a]=0
         update_progress(frame_count/POPULATION)
         print(a)
     else:
@@ -125,7 +133,7 @@ endE = 0.1 #Final chance of random action
 anneling_steps = 10000. #How many steps of training to reduce startE to endE.
 pre_train_steps = 10000 #How many steps of random actions before training begins.
 max_epLength = 50 #The max allowed length of our episode.
-load_model = False #Whether to load a saved model.
+#load_model = False #Whether to load a saved model.
 path = "./dqn" #The path to save our model to.
 h_size = 1024 #The size of the final convolutional layer before splitting it into Advantage and Value streams.
 tau = 0.001 #Rate to update target network toward primary network
@@ -135,35 +143,37 @@ img_size=84 #Size of the image.
 
 while SQL.check_table()==WAIT:
     pass
-if SQL.check_table()==RESTORE:
-    load_model=True
+# if SQL.check_table()==RESTORE:
+#     load_model=True
 Genomes=SQL.GatherGenomes()
+gene_images=setup_genomes()
 POPULATION=len(Genomes)
 print(POPULATION)
 
 UsedGenomes=np.ones(Genomes.shape[0])
 FakeGenomes=list(range(0,(Genomes.shape[0])))
 random.shuffle(FakeGenomes)
-print("Load Model is " + str(load_model) )
+#print("Load Model is " + str(load_model) )
 print()
 tf.reset_default_graph()
 batch_size = POPULATION//4 #How many experiences to use for each training step.
 #mainQN = Qnetwork(h_size,img_size,POPULATION,batch_size,"Main")
 #targetQN = Qnetwork(h_size,img_size,POPULATION,batch_size,"Target")
-mainQN=FrozenValueNetwork()
-mainQN_model=mainQN.make_model()
-init = tf.global_variables_initializer()
+#mainQN=FrozenValueNetwork()
+#mainQN_model=mainQN.make_model()
+model = load_model('dqn_frozen_model.h5')
+#init = tf.global_variables_initializer()
 
-saver = tf.train.Saver()
+#saver = tf.train.Saver()
 
-trainables = tf.trainable_variables()
+#trainables = tf.trainable_variables()
 
-targetOps = updateTargetGraph(trainables,tau)
+#targetOps = updateTargetGraph(trainables,tau)
 
 
-e = startE
-stepDrop = (startE - endE)/anneling_steps
-total_steps = 0
+#e = startE
+#stepDrop = (startE - endE)/anneling_steps
+#total_steps = 0
 
 print("Ready!")
 print()
@@ -172,33 +182,35 @@ if not os.path.exists(path):
     os.makedirs(path)
 
 with tf.Session() as sess:
-
+    pass
     #Vanilla Policy Setup
-    sess.run(init)
-    if load_model == True:
-        print('Loading Model...')
-        ckpt = tf.train.get_checkpoint_state(path)
-        saver.restore(sess,ckpt.model_checkpoint_path)
-        epoch=int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
-    print()
-    #Infinite Loop For Actions
-    while True:
-        check=SQL.check_table()
-        if check==ACTION or check==RESTORE: #Mario Needs an Action
-            frame_count=do_action(SQL,frame_count)
-        elif check==DEATH or check==GENERATION_OVER: # Mario has Died
-        
-            genomeImages=setup_genomes()
-            timeStamp=datetime.datetime.now().time()
-            trainBatch=SQL.gain_history()
-            SQL.insert_into_permanent_tables(genomeImages,trainBatch,timeStamp)
-            FakeGenomes=list(range(0,(Genomes.shape[0])))
-            random.shuffle(FakeGenomes)
-            SQL.clear_table()
-            frame_count=0
-            if check==GENERATION_OVER:
-                Genomes=SQL.GatherGenomes()
-            frame_count=do_action(SQL,frame_count)
+    # sess.run(init)
+    # if load_model == True:
+    #     print('Loading Model...')
+    #     ckpt = tf.train.get_checkpoint_state(path)
+    #     saver.restore(sess,ckpt.model_checkpoint_path)
+    #     epoch=int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
+print()
+#Infinite Loop For Actions
+while True:
+    check=SQL.check_table()
+    if check==ACTION or check==RESTORE: #Mario Needs an Action
+        frame_count=do_action(SQL,frame_count)
+    elif check==DEATH or check==GENERATION_OVER: # Mario has Died
+    
+        genomeImages=setup_genomes()
+        timeStamp=datetime.datetime.now().time()
+        trainBatch=SQL.gain_history()
+       # SQL.insert_into_permanent_tables(genomeImages,trainBatch,timeStamp)
+        FakeGenomes=list(range(0,(Genomes.shape[0])))
+        random.shuffle(FakeGenomes)
+        SQL.clear_table()
+        frame_count=0
+        if check==GENERATION_OVER:
+            Genomes=SQL.GatherGenomes()
+            gene_images=setup_genomes()
+            UsedGenomes=np.ones(Genomes.shape[0])
+        frame_count=do_action(SQL,frame_count)
             
             # #Update final one
             # #print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
