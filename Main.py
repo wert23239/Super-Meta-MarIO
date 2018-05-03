@@ -22,7 +22,8 @@ import tensorflow.contrib.slim as slim
 import numpy as np
 import os
 SQL=SQLCalls()
-#SQL.clear_permanent_tables()
+SQL.clear_permanent_tables()
+
 def process_img(original_image):
     processed_img= cv2.resize(original_image,(580,580))
     return np.array(processed_img)
@@ -84,28 +85,22 @@ def do_action(SQL,frame_count):
     print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
     new_screen=process_img(print_screen)
     image_duplicated=np.tile(new_screen, (POPULATION,1,1,1))
-    history=model.predict([image_duplicated,gene_images],batch_size=32)
-    results=history[:,1]*UsedGenomes
+    #print(image_duplicated[0])
+    #print(gene_images)
+    history=model.predict([image_duplicated,gene_images],batch_size=16)
+    #print(len(history))
+    if epoch%2==0:
+        results=history[:,1]*UsedGenomes
+    else:
+        results=history[:,0]*UsedGenomes 
 
-    #f_dict={mainQN.used_genomes:UsedGenomes,mainQN.genomes:Genomes,\
-    #mainQN.imageIn:[new_screen],mainQN.condition:0,mainQN.correct_action:[10],mainQN.correct_mean:[10]}
-    #Gain Action from Tenserflow
-    #a,value,out = sess.run([mainQN.predict,mainQN.Value,mainQN.Qout],feed_dict=f_dict)
-    # if(a==0):
-    #     print(a)
-    #     print(value)
-    #     print(out)
-    #a = np.random.choice(a_dist,p=a_dist)
-    #a = np.argmax([a_dist] == a)
-    #print(a)
-    # a=FakeGenomes.pop(0)
-    # species,genome=SQL.convert_to_species_genome(a+1)
     frame_count+=1
     if frame_count<=POPULATION:
         a=np.argmax(results)
+        #a=FakeGenomes.pop(0)
         UsedGenomes[a]=0
-        update_progress(frame_count/POPULATION)
         print(a)
+        update_progress(frame_count/POPULATION)
     else:
         a=1
     species,genome=SQL.convert_to_species_genome(a+1)
@@ -147,6 +142,7 @@ while SQL.check_table()==WAIT:
 #     load_model=True
 Genomes=SQL.GatherGenomes()
 gene_images=setup_genomes()
+timeStamp=datetime.datetime.now().time()
 POPULATION=len(Genomes)
 print(POPULATION)
 
@@ -161,7 +157,7 @@ batch_size = POPULATION//4 #How many experiences to use for each training step.
 #targetQN = Qnetwork(h_size,img_size,POPULATION,batch_size,"Target")
 #mainQN=FrozenValueNetwork()
 #mainQN_model=mainQN.make_model()
-model = load_model('dqn_frozen_model.h5')
+model = load_model('dqn_frozen_modelv4.h5')
 #init = tf.global_variables_initializer()
 
 #saver = tf.train.Saver()
@@ -197,21 +193,25 @@ while True:
     if check==ACTION or check==RESTORE: #Mario Needs an Action
         frame_count=do_action(SQL,frame_count)
     elif check==DEATH or check==GENERATION_OVER: # Mario has Died
-    
-        genomeImages=setup_genomes()
-        timeStamp=datetime.datetime.now().time()
+        print("Epoch " + str(epoch) + " Complete")
+        #timeStamp=datetime.datetime.now().time()
         trainBatch=SQL.gain_history()
-       # SQL.insert_into_permanent_tables(genomeImages,trainBatch,timeStamp)
         FakeGenomes=list(range(0,(Genomes.shape[0])))
         random.shuffle(FakeGenomes)
-        SQL.clear_table()
         frame_count=0
+        epoch+=1
         if check==GENERATION_OVER:
+            SQL.insert_into_permanent_tables(gene_images,trainBatch,timeStamp,True)
             Genomes=SQL.GatherGenomes()
             gene_images=setup_genomes()
-            UsedGenomes=np.ones(Genomes.shape[0])
+        else:
+            SQL.insert_into_permanent_tables(gene_images,trainBatch,timeStamp,False)
+            timeStamp=datetime.datetime.now().time()
+        SQL.clear_table()
+        SQL.clear_extra_genomes()
         frame_count=do_action(SQL,frame_count)
-            
+        UsedGenomes=np.ones(Genomes.shape[0])
+            # epoch+=1
             # #Update final one
             # #print_screen = np.array(ImageGrab.grab(bbox=(0,60,580,530)))
             # #new_screen=np.array(np.reshape(process_img(print_screen),[84,84,3]))

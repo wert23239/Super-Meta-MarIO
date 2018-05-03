@@ -2,7 +2,8 @@
 Test.png
 /dqn
 /dqnnew
-
+/failures
+/successes
 build.zip
 # Byte-compiled / optimized / DLL files
 __pycache__/

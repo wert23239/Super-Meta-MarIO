@@ -36,13 +36,26 @@ class SQLCalls():
         self.cur.execute("PRAGMA journal_mode=WAL;")
         self.cur.execute("PRAGMA read_uncommitted = true;")
 
+    def setup_all_tables(self):
+        self.create_image_table()
+        self.create_genome_table()
+        self.create_permanent_gene_table()
+        self.create_permanent_image_table()
+        self.create_permanent_timestamp_table()
 
-    def create_table(self):
+    def create_image_table(self):
         self.cur.execute('''create table rewards (
             ID integer  PRIMARY KEY,GenomeNum INT,Species INT, 
         Genome INT, Score INT, Image array, 
         ImageEnd array,Done INT, Status INT)''')
-        self.con.commit()
+        self.con.commit() 
+
+    def create_genome_table(self):
+        self.cur.execute('''CREATE TABLE Genes ( 
+            Species int(11) NOT NULL, Genome int(11) NOT NULL, GenomeNum int(11) NOT NULL, 
+        Gene int(11) NOT NULL, GeneContent varchar(100) NOT NULL, 
+        PRIMARY KEY (Species, Genome, Gene) )''')
+        self.con.commit()   
 
     def clear_permanent_tables(self):  
         self.cur.execute('''Delete from example_images
@@ -53,6 +66,12 @@ class SQLCalls():
         ''') 
         self.con.commit()
 
+    def clear_extra_genomes(self):
+        self.cur.execute('''DELETE FROM example_genes
+        WHERE  NOT EXISTS (SELECT ei.GenomeKey
+                   FROM   example_images ei
+                   WHERE  example_genes.GenomeKey = ei.GenomeKey)''')
+        self.con.commit()	
     def create_permanent_image_table(self):
         self.cur.execute('''create table example_images (
         ID integer  PRIMARY KEY, GenomeKey TEXT, Score INT ,Image array, 
@@ -69,9 +88,10 @@ class SQLCalls():
         ID integer  PRIMARY KEY, GenomeKey TEXT, GeneImage array)''')
         self.con.commit()
 
-    def insert_into_permanent_tables(self,genomeImages,trainBatch,timeStamp):
+    def insert_into_permanent_tables(self,genomeImages,trainBatch,timeStamp,isGenerationOver):
         self.insert_timestamp(timeStamp)
-        self.insert_genome_images(trainBatch,timeStamp)
+        if isGenerationOver:
+            self.insert_genome_images(trainBatch,timeStamp)
         self.insert_examples_genes(genomeImages,timeStamp)
         self.con.commit()
     def insert_timestamp(self,timeStamp):
@@ -141,6 +161,7 @@ class SQLCalls():
         self.con.commit()
 
     def update_image(self,image2):  
+
         sql = ''' UPDATE rewards
                 SET 
                 imageEnd=?
