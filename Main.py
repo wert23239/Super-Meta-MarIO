@@ -90,6 +90,7 @@ def do_action(SQL,frame_count):
     history=model.predict([image_duplicated,gene_images],batch_size=16)
     #print(len(history))
     if epoch%2==0:
+        max_prev=max(history[:,1])
         results=history[:,1]*UsedGenomes
     else:
         results=history[:,0]*UsedGenomes 

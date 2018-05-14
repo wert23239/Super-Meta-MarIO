@@ -1,7 +1,7 @@
 # Super Meta MarIO
 
 ## Using genetic algorithms and reinforcement learning combined to beat Mario levels.
-![Background](Background.png)
+![Background](images/Background.png)
 
 ## Release is Out
 <b> If you go to the Releases you will be able to download the fully working code. Do this before cloning this repo and trying to get it to work. </b>
@@ -29,7 +29,7 @@ The problem isn't necessarily intuitive. For one it is generalizable and there i
 
 #### Example
 
-[![OpenCv (Python)](selfdrivingcar.gif)](https://www.youtube.com/watch?v=v07t_GEIQzI)
+[![OpenCv (Python)](images/selfdrivingcar.gif)](https://www.youtube.com/watch?v=v07t_GEIQzI)
 
 This is an OpenCV tutorial that was able to make a self-driving car in GTAV using this method. You can click to watch the whole thing.
 
@@ -58,7 +58,7 @@ The most concrete problem even with infinite time is the concept of having a rea
 #### Example
 
 
-![Isolated Person Problem](IsolatedPersonProblem.gif)
+![Isolated Person Problem](images/IsolatedPersonProblem.gif)
 
 This is same situation as described above. Without the abillity to retrain memory a genetic algorithm can't solve this problem.
 
@@ -69,7 +69,7 @@ Giving, a genetic algorithm hidden states is possible but usually only on a smal
 
 #### Example
 
-![Local Minimum](LocalMinimumBasic.png)
+![Local Minimum](images/LocalMinimumBasic.png)
 
 An example of a Local Minimum. If the fitness is judged by how far right you go, an algorithm could evolve to simply always go right and miss the optimal path.
 
@@ -111,7 +111,7 @@ With the timeout function in place that means even after an orgranism times out 
 
 #### Example
 
-![Continous Play](ContinousPlay.gif)
+![Continous Play](images/ContinousPlay.gif)
 
 This is a good example that showcases both a timeout and what non-continous and continous play looks like. 
 
